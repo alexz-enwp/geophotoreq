@@ -49,11 +49,11 @@ $(document).ready(function(){
 	$("#form-opts").change(function(){
 		changeOptions();
 	});
-	$("#form-opts").click(function(){
-		if ($.browser.msie) { // change() is broken for radio buttons on IE
-			changeOptions();
-		}
-	});
+	//$("#form-opts").click(function(){
+	//	if ($.browser.msie) { // change() is broken for radio buttons on IE
+	//		changeOptions();
+	//	}
+	//});
 	
 	if (!navigator.geolocation) {
 		$('#geoapi').prop('disabled', "disabled");

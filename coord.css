@@ -59,6 +59,10 @@
 #results {
 	position: relative;
 }
+#main {
+	padding-top: 10px;
+}
+
 #results-inner {
 	width:auto;
 }
