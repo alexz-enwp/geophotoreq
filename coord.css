@@ -1,0 +1,102 @@
+/*
+	Copyright 2013 Alex Zaddach. (mrzmanwiki@gmail.com)
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+*/
+
+.geo-container {
+	width:700px;
+	float:left;
+}
+.geo-label {
+	width:20%;
+	float:left;
+	text-align:right;
+	padding-right:3px;
+}
+.geo-input {
+	width:60%;
+}
+.geo-label-2 {
+	width:20%;
+	float:left;
+	text-align:right;
+	padding-right:3px;
+}
+/*
+.geo-input-2 {
+	padding-left:3px;
+}
+*/
+.geo-res-t {
+	width:50%;
+	float:left;
+	text-align:left;
+	white-space: nowrap;
+}
+.geo-res-n {
+	width:15%;
+	float:left;
+	text-align:left;
+	white-space: nowrap;
+}
+.res-even {
+	background-color: #E8E8ED;
+}
+#main,
+#results {
+	position: relative;
+}
+#results-inner {
+	width:auto;
+}
+.geo-warning {
+	border: 2px solid #FF0033;
+	background-color: #FFCCCC;
+	width:50%;
+	margin-top:10px;
+	font-weight: bold;
+	text-align: center;
+}
+#note {
+	font-size: 75%;
+	border: 1px solid grey;
+	padding: 2px;
+	color: #36454F;
+	width:25%;
+	text-align: center;
+}
+
+#no-js-warn {
+	border: 2px solid #960018;
+	font-size: 125%;
+	padding: 2px;
+}
+
+#geoapi-extend {
+	display:none;
+}
+
+#extra-opts {
+	padding-top: 1.5%;
+}
+#form-opts {
+	padding-bottom: 1.5%;
+}
+#extra-checks {
+	text-align:right; 
+	padding-right:60%;
+	padding-bottom: 1%;
+}
