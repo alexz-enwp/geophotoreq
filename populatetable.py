@@ -63,21 +63,21 @@ class GeoPhotoReqGen(object):
 		`reqphoto` tinyint(1) DEFAULT '0',
 		`noimg` tinyint(1) DEFAULT '0',
 		`nojpg` tinyint(1) DEFAULT '0',
-		UNIQUE KEY `title` (`title`),
+		UNIQUE KEY `title` (`title`)
 		) ENGINE=MyISAM""")
 		self.cursor.execute("TRUNCATE TABLE p50380g50838__geophotoreq.photo_tmp")
 		query = """INSERT IGNORE INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, reqphoto)
-		SELECT page2.page_title, POINT(gt_lon, gt_lat), 1 FROM enwiki_p.page AS page1 
+		SELECT page2.page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page AS page1 
 		JOIN enwiki_p.categorylinks ON page1.page_id=cl_from 
 		JOIN enwiki_p.page as page2 ON page2.page_title=page1.page_title AND page2.page_namespace=0 
 		JOIN enwiki_p.geo_tags ON gt_page_id=page2.page_id AND gt_primary=1 AND gt_globe='earth' 
 		WHERE page1.page_namespace=1 AND cl_to=%s"""
 		for cat in self.catlist:
-			self.cursor.execute(insquery, (cat))
+			self.cursor.execute(query, (cat))
 			
 	def getNoImages(self):
 		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, noimg)
-		SELECT page_title, POINT(gt_lon, gt_lat), 1 FROM enwiki_p.page
+		SELECT page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page
 		JOIN enwiki_p.geo_tags ON gt_page_id=page_id AND gt_primary=1 AND gt_globe='earth' 
 		LEFT JOIN enwiki_p.imagelinks ON page_id=il_from
 		WHERE page_namespace=0 AND page_is_redirect=0 AND il_to IS NULL
@@ -85,7 +85,7 @@ class GeoPhotoReqGen(object):
 		
 	def getNoJPGs(self):
 		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, nojpg)
-		SELECT page_title, POINT(gt_lon, gt_lat), 1 FROM enwiki_p.page
+		SELECT page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page
 		JOIN enwiki_p.geo_tags ON gt_page_id=page_id AND gt_primary=1 AND gt_globe='earth' 
 		LEFT JOIN enwiki_p.imagelinks ON page_id=il_from 
 		AND (CONVERT(il_to USING latin1) COLLATE latin1_swedish_ci LIKE "%.jpg" OR CONVERT(il_to USING latin1) COLLATE latin1_swedish_ci LIKE "%.jpeg")
@@ -107,3 +107,6 @@ class GeoPhotoReqGen(object):
 		self.cursor.execute("UNLOCK TABLES")
 		self.cursor.execute("DROP TABLE p50380g50838__geophotoreq.photo_tmp")
 
+if __name__ == "__main__":
+	g = GeoPhotoReqGen()
+	g.run()
