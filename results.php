@@ -50,33 +50,48 @@ case "results":
 	if (!empty($whereconds)) {
 		$where = 'AND (' . implode($andor, $whereconds) . ')';
 	}
-	$db = mysql_connect( 'enwiki.labsdb', $my_user, $my_pass );
+	$db = mysql_connect( 'tools-db', $my_user, $my_pass );
 	mysql_select_db( 'p50380g50838__geophotoreq', $db );
-	
+
 	$const = 0.00020943241720614; // Based on the radius of Earth or something
-	
+
 	$lowerlat = -1.0*(sqrt( $const * $dist*$dist ) - $lat);
 	$upperlat = sqrt( $const * $dist*$dist ) + $lat;
 	$lowerlong = (cos( ($lat * M_PI) / 180 ) * $long - sqrt( $const * $dist*$dist ) ) / ( cos( ($lat * M_PI) / 180 ) );
 	$upperlong = (cos( ($lat * M_PI) / 180 ) * $long + sqrt( $const * $dist*$dist ) ) / ( cos( ($lat * M_PI) / 180 ) );
-	
+
 	// Assume 1% error
 	$lowerlat -= $lowerlat * 0.01;
 	$upperlat += $upperlat * 0.01;
 	$lowerlong -= $lowerlong * 0.01;
 	$upperlong += $upperlong * 0.01;
-	
+
+	$qstring = "SELECT title, X(coordinate) AS latitude, Y(coordinate) AS longitude,
+        3963.1676*ACOS(SIN($lat*PI()/180.0)*SIN(X(coordinate)*PI()/180.0)+COS($lat*PI()/180.0)*COS(X(coordinate)*PI()/180.0)*COS( Y(coordinate)*PI()/180.0-$long*PI()/180.0)) AS distance
+        FROM photocoords WHERE
+        Contains(
+                Polygon(LineString(
+                        Point($lowerlat,$upperlong),
+                        Point($lowerlat,$lowerlong),
+                        Point($upperlat,$lowerlong),
+                        Point($upperlat,$upperlong),
+                        Point($lowerlat,$upperlong)
+        )), coordinate)
+        $where
+        ORDER BY GLength(LineString(Point($lat, $long), coordinate)) ASC LIMIT $limit;";
+	file_put_contents('/data/project/geophotoreq/public_html/query.txt', $qstring);
+
 	$res = mysql_query("SELECT title, X(coordinate) AS latitude, Y(coordinate) AS longitude,
 	3963.1676*ACOS(SIN($lat*PI()/180.0)*SIN(X(coordinate)*PI()/180.0)+COS($lat*PI()/180.0)*COS(X(coordinate)*PI()/180.0)*COS( Y(coordinate)*PI()/180.0-$long*PI()/180.0)) AS distance
 	FROM photocoords WHERE
 	Contains(
-		LineString(
+		Polygon(LineString(
 			Point($lowerlat,$upperlong),
 			Point($lowerlat,$lowerlong),
 			Point($upperlat,$lowerlong),
 			Point($upperlat,$upperlong),
 			Point($lowerlat,$upperlong)
-	), coordinate)
+	)), coordinate)
 	$where 
 	ORDER BY GLength(LineString(Point($lat, $long), coordinate)) ASC LIMIT $limit;", $db);
 
@@ -98,11 +113,11 @@ case "results":
 			'distance' => $distance,
 		);
 	}
-	
+
 	function cmpdist($a, $b) {
 		return (int)ceil($a['distance']-$b['distance']);
 	}
-	
+
 	usort( $retval, 'cmpdist' );
 	$retval = array_slice( $retval, 0, $limit-10, true );
 	$retval = json_encode($retval);
@@ -111,7 +126,7 @@ case "results":
 case "getcoords":
 	header( "Content-Type: application/json; charset=utf-8" );
 	$db = mysql_connect( 'enwiki.labsdb', $my_user, $my_pass );
-	mysql_select_db( 'enwiki_p', $db );	
+	mysql_select_db( 'enwiki_p', $db );
 	$title = ucfirst(str_replace(' ', '_', mysql_real_escape_string($_POST['title'])));
 	$result = mysql_query( "SELECT gt_lat, gt_lon FROM geo_tags
 	JOIN page ON page_id=gt_page_id
@@ -120,7 +135,7 @@ case "getcoords":
 	$err = mysql_error( $db );
 	if ( $err ) {
 		$res['error'] = $err;
-		echo( json_encode($res) );		
+		echo( json_encode($res) );
 	} elseif ( mysql_num_rows( $result ) === 0 ) {
 		$res['error'] = 'Unable to determine coordinates';
 		echo( json_encode($res) );
@@ -133,7 +148,7 @@ case "getcoords":
 	break;
 case "redir":
 	$db = mysql_connect( 'enwiki.labsdb', $my_user, $my_pass );
-	mysql_select_db( 'enwiki_p', $db );	
+	mysql_select_db( 'enwiki_p', $db );
 	$title = ucfirst(str_replace(' ', '_', mysql_real_escape_string($_POST['title'])));
 	$res = mysql_query( "SELECT rd_title FROM redirect JOIN page ON rd_from=page.page_id JOIN page AS page2 ON page2.page_title=rd_title AND page2.page_namespace=rd_namespace WHERE rd_namespace=0 AND page.page_namespace=0 AND page.page_title='$title' LIMIT 1;", $db );
 	$row = mysql_fetch_assoc($res);
@@ -145,7 +160,7 @@ case "redir":
 	break;
 case "exists":
 	$db = mysql_connect( 'enwiki.labsdb', $my_user, $my_pass );
-	mysql_select_db( 'enwiki_p', $db );	
+	mysql_select_db( 'enwiki_p', $db );
 	$title = ucfirst(str_replace(' ', '_', mysql_real_escape_string($_POST['title'])));
 	$res = mysql_query( "SELECT page_id,page_is_redirect FROM page WHERE page_namespace=0 AND page_title='$title';", $db );
 	$row = mysql_fetch_assoc($res);

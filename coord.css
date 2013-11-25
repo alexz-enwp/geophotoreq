@@ -15,19 +15,29 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
+.form-opts-left {
+	width:14em;
+	display:inline-block;
+	text-align:right;
+}
+.form-opts-right {
+	display:inline-block;
+	text-align:right;
+	width:12em;
+}
 .geo-container {
-	width:700px;
+	width:85%;
 	float:left;
 }
 .geo-label {
-	width:20%;
-	float:left;
+	width:5em;
+	display:inline-block;
 	text-align:right;
-	padding-right:3px;
 }
-.geo-input {
-	width:60%;
+.geo-label-4 {
+	display:inline-block;
+	text-align:right;
+	width:5em;
 }
 .geo-label-2 {
 	width:20%;
@@ -35,11 +45,6 @@
 	text-align:right;
 	padding-right:3px;
 }
-/*
-.geo-input-2 {
-	padding-left:3px;
-}
-*/
 .geo-res-t {
 	width:50%;
 	float:left;
@@ -52,8 +57,8 @@
 	text-align:left;
 	white-space: nowrap;
 }
-.res-even {
-	background-color: #E8E8ED;
+.res-odd {
+	background-color: #F5F5F5;
 }
 #main,
 #results {
@@ -66,6 +71,7 @@
 #results-inner {
 	width:auto;
 }
+
 .geo-warning {
 	border: 2px solid #FF0033;
 	background-color: #FFCCCC;
@@ -100,7 +106,7 @@
 	padding-bottom: 1.5%;
 }
 #extra-checks {
-	text-align:right; 
-	padding-right:60%;
+	padding-right:10%;
 	padding-bottom: 1%;
+	padding-left: 2%;
 }

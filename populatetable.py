@@ -57,7 +57,8 @@ class GeoPhotoReqGen(object):
 				break
 				
 	def getRequestedTitles(self):
-		self.cursor.execute("""CREATE TABLE IF NOT EXISTS p50380g50838__geophotoreq.photo_tmp (
+		self.cursor.execute("CREATE DATABASE IF NOT EXISTS p50380g50838__geophotoreq")
+		self.cursor.execute("""CREATE TABLE IF NOT EXISTS p50380g50838__geophotoreq.photocoords (
 		`title` varchar(255) NOT NULL,
 		`coordinate` point NOT NULL,
 		`reqphoto` tinyint(1) DEFAULT '0',
@@ -65,8 +66,8 @@ class GeoPhotoReqGen(object):
 		`nojpg` tinyint(1) DEFAULT '0',
 		UNIQUE KEY `title` (`title`)
 		) ENGINE=MyISAM""")
-		self.cursor.execute("TRUNCATE TABLE p50380g50838__geophotoreq.photo_tmp")
-		query = """INSERT IGNORE INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, reqphoto)
+		self.cursor.execute("TRUNCATE TABLE p50380g50838__geophotoreq.photocoords")
+		query = """INSERT IGNORE INTO p50380g50838__geophotoreq.photocoords (title, coordinate, reqphoto)
 		SELECT page2.page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page AS page1 
 		JOIN enwiki_p.categorylinks ON page1.page_id=cl_from 
 		JOIN enwiki_p.page as page2 ON page2.page_title=page1.page_title AND page2.page_namespace=0 
@@ -76,24 +77,29 @@ class GeoPhotoReqGen(object):
 			self.cursor.execute(query, (cat))
 			
 	def getNoImages(self):
-		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, noimg)
+		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photocoords (title, coordinate, noimg)
 		SELECT page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page
 		JOIN enwiki_p.geo_tags ON gt_page_id=page_id AND gt_primary=1 AND gt_globe='earth' 
 		LEFT JOIN enwiki_p.imagelinks ON page_id=il_from
 		WHERE page_namespace=0 AND page_is_redirect=0 AND il_to IS NULL
-		ON DUPLICATE KEY UPDATE noimg=1""")
+		ON DUPLICATE KEY UPDATE noimg=1"""
+		)
 		
 	def getNoJPGs(self):
-		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photo_tmp (title, coordinate, nojpg)
+		self.cursor.execute("""INSERT INTO p50380g50838__geophotoreq.photocoords (title, coordinate, nojpg)
 		SELECT page_title, POINT(gt_lat, gt_lon), 1 FROM enwiki_p.page
 		JOIN enwiki_p.geo_tags ON gt_page_id=page_id AND gt_primary=1 AND gt_globe='earth' 
 		LEFT JOIN enwiki_p.imagelinks ON page_id=il_from 
 		AND (CONVERT(il_to USING latin1) COLLATE latin1_swedish_ci LIKE "%.jpg" OR CONVERT(il_to USING latin1) COLLATE latin1_swedish_ci LIKE "%.jpeg")
 		WHERE page_namespace=0 AND page_is_redirect=0 AND il_to IS NULL
-		ON DUPLICATE KEY UPDATE nojpg=1""")
+		ON DUPLICATE KEY UPDATE nojpg=1"""
+		)
 
-	def repopulateMainTable(self):	
-		self.cursor.execute("""CREATE TABLE IF NOT EXISTS p50380g50838__geophotoreq.photocoords (
+	def repopulateMainTable(self):
+		toolsdb = self.db = MySQLdb.connect(host="tools-db", read_default_file="/data/project/geophotoreq/replica.my.cnf")
+		cursor = toolsdb.cursor()
+		cursor.execute("CREATE DATABASE IF NOT EXISTS p50380g50838__geophotoreq")
+		cursor.execute("""CREATE TABLE IF NOT EXISTS p50380g50838__geophotoreq.photocoords (
 		`title` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin DEFAULT NULL,
 		`coordinate` point NOT NULL,
 		`reqphoto` tinyint(1) DEFAULT '0',
@@ -101,11 +107,12 @@ class GeoPhotoReqGen(object):
 		`nojpg` tinyint(1) DEFAULT '0',
 		SPATIAL KEY `coordinate` (`coordinate`)
 		) ENGINE=MyISAM""")
-		self.cursor.execute("LOCK TABLES p50380g50838__geophotoreq.photocoords WRITE, p50380g50838__geophotoreq.photo_tmp WRITE")
-		self.cursor.execute("TRUNCATE TABLE p50380g50838__geophotoreq.photocoords")
-		self.cursor.execute("INSERT INTO p50380g50838__geophotoreq.photocoords SELECT * FROM p50380g50838__geophotoreq.photo_tmp")
-		self.cursor.execute("UNLOCK TABLES")
-		self.cursor.execute("DROP TABLE p50380g50838__geophotoreq.photo_tmp")
+		cursor.execute("TRUNCATE TABLE p50380g50838__geophotoreq.photocoords")
+		cmd = 'mysqldump -h enwiki.labsdb -t --quick p50380g50838__geophotoreq photocoords > dump.sql'
+		os.system(cmd)
+		cmd = 'mysql -h tools-db p50380g50838__geophotoreq < dump.sql'		
+		os.system(cmd)
+		#self.cursor.execute("DROP TABLE p50380g50838__geophotoreq.photocoords")
 
 if __name__ == "__main__":
 	g = GeoPhotoReqGen()

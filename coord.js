@@ -38,6 +38,7 @@ $(document).ready(function(){
 
 	$('#mainform').submit( function() {
 		resspinnerid += 2;
+		$('#warning').html('')
 		injectSpinner($('#submitbutton'), resspinnerid);
 		$('#results-inner').hide('slow', function() {
 			$('#results-inner').html(''); 
@@ -45,6 +46,10 @@ $(document).ready(function(){
 			});	
 		return false;
 	});
+	
+	if (typeof Geo != "undefined") {
+		$('#geoip').show('fast')
+	}
 	
 	$("#form-opts").change(function(){
 		changeOptions();
@@ -100,7 +105,7 @@ function continue3() {
 }
 	
 function changeOptions() {
-	var selected = '#'+ $("#form-opts").contents("input:checked").val() + "-form";
+	var selected = '#'+ $("#form-opts>span").contents("input:checked").val() + "-form";
 	$(".opt-form").hide("normal");
 	$(selected).show("normal");
 }
@@ -114,6 +119,7 @@ function getResults(coords) {
 	var lat = coords[0];
 	var lng = coords[1];
 	var lim = parseInt($("#limit").val());
+	var acc = coords[2];
 	var shownoimg = $("#noimg").prop('checked').toString();
 	var showreqphoto = $("#reqphoto").prop('checked').toString();
 	var shownojpg = $("#nojpg").prop('checked').toString();
@@ -136,7 +142,16 @@ function getResults(coords) {
 	if ($("#dist-type").val() == "km") {
 		dist = km2mi(dist);
 	}
-	request = { latitude: lat, longitude: lng, distance: dist, limit: lim, units: $("#dist-type").val(), noimg: shownoimg, nojpg: shownojpg, reqphoto: showreqphoto, useorquery:useor  };
+	request = { latitude: lat, 
+		longitude: lng, 
+		distance: dist, 
+		limit: lim, 
+		units: $("#dist-type").val(), 
+		noimg: shownoimg, 
+		nojpg: shownojpg, 
+		reqphoto: showreqphoto, 
+		useorquery:useor,
+		accuracy:acc  };
 	if ($("#page").val()) {
 		request.loc = $("#page").val();
 	}
@@ -158,7 +173,20 @@ function makeTable(data) {
 	var coordoutput = '<strong>Lat / Long:</strong> '+ request.latitude.toFixed(4).toString() + ' / ' + request.longitude.toFixed(4).toString();
 	$('#results').show('normal');
 	$('#search-coords').html(coordoutput).show('fast');
-	var header = "<b>"+tbaseodd.replace('$1', "Title")+nbaseodd.replace('$1', "Distance ("+$("#dist-type").val()+")")+nbaseodd.replace('$1', "Latitude")+nbaseodd.replace('$1', "Longitude")+"</b><br />";
+	if (request.accuracy != 0) {
+		accval = request.accuracy.toFixed(4).toString();
+		if (request.accuracy > 1) {
+			accval = request.accuracy.toFixed(1).toString()
+		} 
+		var accoutput = '<br />Accuracy: '+accval+' '+$("#dist-type").val()
+		$('#search-coords').append(accoutput);
+	}
+	var header = "<span style='font-weight: bold;'>"+
+		tbaseodd.replace('$1', "Title")+
+		nbaseodd.replace('$1', "Distance ("+$("#dist-type").val()+")")+
+		nbaseodd.replace('$1', "Latitude")+
+		nbaseodd.replace('$1', "Longitude")+
+		"</span><br />";
 	$('#results-inner').append(header);
 	$('.geo-res-t').fadeIn('slow');
 	$('.geo-res-n').fadeIn('slow');
@@ -167,9 +195,9 @@ function makeTable(data) {
 		var lat = data[i].latitude.toFixed(4);
 		var lng = data[i].longitude.toFixed(4);
 		if ($("#dist-type").val() == 'km') {
-			var dist = mi2km(data[i].distance).toFixed(4)
+			var dist = mi2km(data[i].distance).toFixed(2)
 		} else {
-			var dist = data[i].distance.toFixed(4);
+			var dist = data[i].distance.toFixed(2);
 		}
 		tbase = i%2 == 0 ? tbaseeven : tbaseodd;
 		nbase = i%2 == 0 ? nbaseeven : nbaseodd;
@@ -188,13 +216,25 @@ function makeTable(data) {
 
 $(document).on("click", "#kmlgen", function(){
 	if ( kmlfile ) {
-		$('#kmlinfo').html('KML file generated, available at <a href="/kml/'+kmlfile+'.kml">/kml/'+kmlfile+'.kml</a>. Please save the file to your computer, it will be deleted from the server in 24 hours.');
+		$('#kmlinfo').html('KML file generated, available at <a href="//tools.wmflabs.org/geophotoreq/kml/'+
+			kmlfile+
+			'.kml">/kml/'+
+			kmlfile+
+			'.kml</a>. Please save the file to your computer, it will be deleted from the server in 24 hours.');
 		$('#kmlinfo').show('normal');
 		return false;
 	}
 	kmlspinnerid+=2;
 	injectSpinner($('#kmlgen'), kmlspinnerid);
-	var details = { latitude: request.latitude, longitude: request.longitude, distance: request.distance, limit: request.limit, units: request.units, reqphoto:request.reqphoto, noimg:request.noimg, nojpg:request.nojpg, useorquery:request.useorquery };
+	var details = { latitude: request.latitude, 
+		longitude: request.longitude, 
+		distance: request.distance, 
+		limit: request.limit, 
+		units: request.units, 
+		reqphoto:request.reqphoto, 
+		noimg:request.noimg, 
+		nojpg:request.nojpg, 
+		useorquery:request.useorquery };
 	if (request.loc) {
 		details.locname = request.loc;
 	}
@@ -209,12 +249,20 @@ $(document).on("click", "#kmlgen", function(){
 });
 $(document).on("click", "#googleview", function(){
 	if ( kmlfile ) {
-		window.open("https://maps.google.com/maps?q=https://wmflabs.org/geophotoreq/kml/"+kmlfile+".kml");
+		window.open("https://maps.google.com/maps?q=https://tools.wmflabs.org/geophotoreq/kml/"+kmlfile+".kml");
 		return false;
 	}
 	kmlspinnerid+=2;
 	injectSpinner($('#googleview'), kmlspinnerid);
-	var details = { latitude: request.latitude, longitude: request.longitude, distance: request.distance, limit: request.limit, units: request.units, reqphoto:request.reqphoto, noimg:request.noimg, nojpg:request.nojpg, useorquery:request.useorquery };
+	var details = { latitude: request.latitude, 
+		longitude: request.longitude, 
+		distance: request.distance, 
+		limit: request.limit, 
+		units: request.units, 
+		reqphoto:request.reqphoto, 
+		noimg:request.noimg, 
+		nojpg:request.nojpg, 
+		useorquery:request.useorquery };
 	if (request.loc) {
 		details.locname = request.loc;
 	}
@@ -232,10 +280,14 @@ function kmlres(data, google) {
 	removeSpinner(kmlspinnerid);
 	if (parseInt(data)) {
 		if (!google) {
-			$('#kmlinfo').html('KML file generated, available at <a href="/kml/'+data+'.kml">/kml/'+data+'.kml</a>. Please save the file to your computer, it will be deleted from the server in 24 hours.');
+			$('#kmlinfo').html('KML file generated, available at <a href="//tools.wmflabs.org/geophotoreq/kml/'+
+                        data+
+                        '.kml">/kml/'+
+                        data+
+                        '.kml</a>. Please save the file to your computer, it will be deleted from the server in 24 hours.');
 			$('#kmlinfo').show('normal');
 		} else {
-			window.open("https://maps.google.com/maps?q=https://wmflabs.org/geophotoreq/kml/"+data+".kml");
+			window.open("https://maps.google.com/maps?q=https://tools.wmflabs.org/geophotoreq/kml/"+data+".kml");
 		}
 		kmlfile = data;
 	} else {
@@ -247,7 +299,10 @@ function kmlres(data, google) {
 }
 
 function addWarn(warning) {
-	$('#warning').text(warning);
+	if ($('#warning').text()) {
+		warning = '<br />'+warning;
+	}
+	$('#warning').append(warning);
 	$('#warning').show('fast');
 	return;
 }
@@ -284,7 +339,7 @@ function mi2km(mi) {
 function validateFields() {
 	var lat;
 	var lng;
-	var selected = $("#form-opts").contents("input:checked").val();
+	var selected = $("#form-opts>span").contents("input:checked").val();
 	switch(selected) {
 	case "dec":
 		lat = parseFloat($("#lat").val());
@@ -297,7 +352,7 @@ function validateFields() {
 			addWarn("Latitude or longitude out of valid range.")
 			return false;
 		}
-		getResults([lat, lng]);
+		getResults([lat, lng, 0]);
 		break;
 	case "dms":
 		lat = getDec('lat');
@@ -312,7 +367,7 @@ function validateFields() {
 			addWarn("Latitude or longitude out of valid range.")
 			return false;
 		}
-		getResults([lat, lng]);
+		getResults([lat, lng, 0]);
 		break;
 	case "near":
 		var t = $("#page").val();
@@ -327,8 +382,6 @@ function validateFields() {
 					addWarn("Page doesn't exist");
 					fail = true;
 				} else if (data == "r") {
-					$('#note').text("Resolving redirect ...");
-					$('#note').show('fast');
 					$.ajax({
 						async: false,
 						type: "POST",
@@ -336,10 +389,9 @@ function validateFields() {
 						data: 'action=redir&title='+encodeURIComponent(t),
 						success: function(data) {
 							if (data == "0") {
-								addWarn("Target doesn't exist");
+								addWarn("Redirect to a non-existent page");
 								fail = true;
 							} else {
-								$('#note').text("Resolving redirect ... Done");
 								$('#page').val(data);
 							}
 						}				
@@ -360,7 +412,7 @@ function validateFields() {
 				} else {
 					lat = data.lat;
 					lng = data.lng;
-					getResults([lat, lng]);
+					getResults([lat, lng, 0]);
 				}
 			},
 			dataType: 'json'
@@ -370,12 +422,9 @@ function validateFields() {
 		if ($("#geoapi").prop('checked')) {
 			navigator.geolocation.getCurrentPosition(geolocateAPI, null, {enableHighAccuracy: true});
 		} else {
-			// FIXME: Available on labs?
-			$.getScript("http://toolserver.org/~para/geoip.fcgi", function(){
-				lat = geoip.latitude;
-				lng = geoip.longitude;
-				getResults([lat, lng]);
-			});
+			lat = parseFloat(Geo.lat);
+			lng = parseFloat(Geo.lon);
+			getResults([lat, lng, 0]);
 		}
 	}
 	if (fail) {
@@ -387,8 +436,12 @@ function validateFields() {
 function geolocateAPI(pos) {
 	var lat = pos.coords.latitude;
 	var lng = pos.coords.longitude;
+	var accuracy = parseFloat(pos.coords.accuracy)/1000;
+	var acc = accuracy;
+	if ($("#dist-type").val() == "mi") {
+		acc = km2mi(acc);
+	}
 	if ( $('#extend-rad').prop('checked') ) {
-		var accuracy = parseFloat(pos.coords.accuracy)/1000;
 		var radius = parseFloat($("#dist").val());
 		if ($("#dist-type").val() == "mi") {
 			radius = mi2km(radius);
@@ -401,14 +454,14 @@ function geolocateAPI(pos) {
 			}
 		}
 	}
-	getResults([lat, lng]);	
+	getResults([lat, lng, acc]);	
 }
 
 function injectSpinner( element, id ) {
 	var spinner = $('<img></img>').attr('id', "spinner-" + id)
 	.attr('src', "spinner.gif")
 	.attr('alt', "...").attr('title', "...")
-	$(element).append(spinner);
+	$(element).after(spinner);
 }
 function removeSpinner( id ) {
 	$("#spinner-" + id).remove()
