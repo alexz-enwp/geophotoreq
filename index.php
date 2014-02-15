@@ -107,7 +107,7 @@ require_once('commonphp/GlobalFunctions.php');
 					</div>
 					<br />
 					<input type="submit" id="submitbutton" value="Submit" /><br />
-					<span id="warning" class="notice" style="display:none" ></span>
+					<span id="warning" class="result notice" style="display:none" ></span>
 				</div>
 				</form>
 			</fieldset>
