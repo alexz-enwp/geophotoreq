@@ -51,7 +51,7 @@ case "results":
 		$where = 'AND (' . implode($andor, $whereconds) . ')';
 	}
 	$db = mysql_connect( 'tools-db', $my_user, $my_pass );
-	mysql_select_db( 'p50380g50838__geophotoreq', $db );
+	mysql_select_db( 's51422__geophotoreq', $db );
 
 	$const = 0.00020943241720614; // Based on the radius of Earth or something
 

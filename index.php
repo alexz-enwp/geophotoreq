@@ -29,7 +29,7 @@ require_once('commonphp/GlobalFunctions.php');
 			<div id="main">
 			<fieldset>
 			<legend>Search for pages on the English Wikipedia needing images near a given coordinate</legend>
-				<form id="mainform" action="">
+				<form id="mainform" action="get">
 				<div class="geo-container">
 					<div id="form-opts">
 						<span class="form-opts-left">
